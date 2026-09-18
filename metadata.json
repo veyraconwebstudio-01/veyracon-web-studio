@@ -1,0 +1,6 @@
+{
+  "name": "Veyracon Web Studio",
+  "description": "Veyracon Web Studio creates modern, responsive websites for businesses, brands, entrepreneurs, and creators. Explore ready-made website designs or request a custom website.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
