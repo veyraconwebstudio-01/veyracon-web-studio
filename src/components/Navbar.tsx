@@ -1,12 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import { VeyraconLogo } from './VeyraconLogo';
-import { Menu, X, Instagram, ArrowUpRight, MessageCircle } from 'lucide-react';
+import { UserAccount } from '../types';
+import { Menu, X, Instagram, ArrowUpRight, MessageCircle, User, Shield } from 'lucide-react';
 
 interface NavbarProps {
-  onOpenOrderModal?: () => void;
+  currentUser: UserAccount | null;
+  onOpenAuth: (mode?: 'login' | 'signup' | 'admin') => void;
+  onOpenPortal: () => void;
+  orderCount?: number;
 }
 
-export const Navbar: React.FC<NavbarProps> = () => {
+export const Navbar: React.FC<NavbarProps> = ({
+  currentUser,
+  onOpenAuth,
+  onOpenPortal,
+  orderCount = 0,
+}) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -74,7 +83,7 @@ export const Navbar: React.FC<NavbarProps> = () => {
           </nav>
 
           {/* Right Action Buttons */}
-          <div className="hidden sm:flex items-center gap-3">
+          <div className="hidden sm:flex items-center gap-2.5">
             {/* Instagram Social Link */}
             <a
               href="https://www.instagram.com/veyraconwebstudio/"
@@ -99,6 +108,52 @@ export const Navbar: React.FC<NavbarProps> = () => {
               <MessageCircle className="w-4 h-4" />
             </a>
 
+            {/* User / Owner Portal Trigger */}
+            {currentUser ? (
+              <button
+                onClick={onOpenPortal}
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold uppercase tracking-wider transition-all cursor-pointer ${
+                  currentUser.role === 'admin'
+                    ? 'bg-[#C8A96B]/15 text-[#E2C27D] border border-[#C8A96B]/40 hover:bg-[#C8A96B]/25'
+                    : 'bg-[#16171E] text-[#F5F4F0] border border-[#232530] hover:border-[#C8A96B]/50'
+                }`}
+              >
+                {currentUser.role === 'admin' ? (
+                  <>
+                    <Shield className="w-3.5 h-3.5 text-[#C8A96B]" />
+                    Owner Orders
+                    {orderCount > 0 && (
+                      <span className="w-4 h-4 rounded-full bg-[#C8A96B] text-black text-[10px] font-bold flex items-center justify-center">
+                        {orderCount}
+                      </span>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    <User className="w-3.5 h-3.5 text-[#C8A96B]" />
+                    My Account
+                  </>
+                )}
+              </button>
+            ) : (
+              <div className="flex items-center gap-1.5">
+                <button
+                  onClick={() => onOpenAuth('login')}
+                  className="px-3 py-1.5 rounded-lg text-xs font-semibold text-[#A8A8AD] hover:text-[#F5F4F0] hover:bg-[#16171E] transition-colors cursor-pointer"
+                >
+                  Client Login
+                </button>
+                <button
+                  onClick={() => onOpenAuth('admin')}
+                  className="px-2.5 py-1.5 rounded-lg text-xs font-semibold text-[#E2C27D] bg-[#16171E] border border-[#C8A96B]/30 hover:border-[#C8A96B] transition-colors flex items-center gap-1 cursor-pointer"
+                  title="Owner / Admin Login"
+                >
+                  <Shield className="w-3 h-3 text-[#C8A96B]" />
+                  Owner
+                </button>
+              </div>
+            )}
+
             {/* Gold-outline CTA button */}
             <a
               href="#contact"
@@ -112,13 +167,22 @@ export const Navbar: React.FC<NavbarProps> = () => {
 
           {/* Mobile Hamburger Button */}
           <div className="flex items-center gap-2 sm:hidden">
-            <a
-              href="#contact"
-              onClick={(e) => handleNavClick(e, '#contact')}
-              className="px-2.5 py-1.5 rounded text-[11px] font-semibold uppercase tracking-wider text-[#E2C27D] border border-[#C8A96B]/40 bg-[#C8A96B]/5"
-            >
-              Start
-            </a>
+            {currentUser ? (
+              <button
+                onClick={onOpenPortal}
+                className="px-2.5 py-1.5 rounded text-[11px] font-semibold text-[#E2C27D] border border-[#C8A96B]/40 bg-[#C8A96B]/10"
+              >
+                {currentUser.role === 'admin' ? 'Owner' : 'Account'}
+              </button>
+            ) : (
+              <button
+                onClick={() => onOpenAuth('login')}
+                className="px-2 py-1 rounded text-[11px] text-[#A8A8AD] border border-[#232530]"
+              >
+                Login
+              </button>
+            )}
+
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               className="p-2 rounded-lg text-[#F5F4F0] hover:bg-[#16171E] border border-[#1E2028] transition-colors focus:outline-none focus:ring-1 focus:ring-[#C8A96B]"
@@ -133,7 +197,7 @@ export const Navbar: React.FC<NavbarProps> = () => {
 
       {/* Mobile Drawer Overlay */}
       {mobileMenuOpen && (
-        <div className="lg:hidden fixed inset-x-0 top-[60px] bg-[#0B0B0D]/98 border-b border-[#1E2028] shadow-2xl backdrop-blur-xl px-6 py-6 transition-all">
+        <div className="lg:hidden fixed inset-x-0 top-[60px] bg-[#0B0B0D]/98 border-b border-[#1E2028] shadow-2xl backdrop-blur-xl px-6 py-6 transition-all max-h-[85vh] overflow-y-auto">
           <div className="flex flex-col space-y-3">
             {navLinks.map((link) => (
               <a
@@ -147,7 +211,44 @@ export const Navbar: React.FC<NavbarProps> = () => {
               </a>
             ))}
 
-            <div className="pt-4 flex flex-col gap-3">
+            {/* Mobile Auth Options */}
+            <div className="pt-2 border-b border-[#181920] pb-4 flex items-center justify-between gap-3">
+              {currentUser ? (
+                <button
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    onOpenPortal();
+                  }}
+                  className="w-full py-2.5 px-3 rounded-lg text-xs font-bold uppercase tracking-wider bg-[#16171E] border border-[#C8A96B]/40 text-[#E2C27D] flex items-center justify-center gap-2"
+                >
+                  <Shield className="w-4 h-4 text-[#C8A96B]" />
+                  Open {currentUser.role === 'admin' ? 'Owner Dashboard' : 'Client Orders'}
+                </button>
+              ) : (
+                <>
+                  <button
+                    onClick={() => {
+                      setMobileMenuOpen(false);
+                      onOpenAuth('login');
+                    }}
+                    className="flex-1 py-2.5 px-3 rounded-lg text-xs font-semibold bg-[#16171E] border border-[#232530] text-[#F5F4F0] text-center"
+                  >
+                    User Login
+                  </button>
+                  <button
+                    onClick={() => {
+                      setMobileMenuOpen(false);
+                      onOpenAuth('admin');
+                    }}
+                    className="flex-1 py-2.5 px-3 rounded-lg text-xs font-semibold bg-[#C8A96B]/10 border border-[#C8A96B]/40 text-[#E2C27D] text-center"
+                  >
+                    Owner Login
+                  </button>
+                </>
+              )}
+            </div>
+
+            <div className="pt-2 flex flex-col gap-3">
               <a
                 href="#contact"
                 onClick={(e) => handleNavClick(e, '#contact')}
@@ -184,3 +285,4 @@ export const Navbar: React.FC<NavbarProps> = () => {
   );
 };
 export default Navbar;
+

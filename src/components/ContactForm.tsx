@@ -1,16 +1,23 @@
 import React, { useState, useEffect } from 'react';
-import { ProjectFormData } from '../types';
-import { MessageCircle, Send, CheckCircle2, Copy, Check, Sparkles, AlertCircle } from 'lucide-react';
+import { ProjectFormData, UserAccount, OrderItem } from '../types';
+import { saveOrder } from '../utils/orderStorage';
+import { MessageCircle, Send, CheckCircle2, Copy, Check, Sparkles, AlertCircle, Mail } from 'lucide-react';
 
 interface ContactFormProps {
   preselectedWebsiteType?: string;
+  currentUser?: UserAccount | null;
+  onOrderCreated?: (order: OrderItem) => void;
 }
 
-export const ContactForm: React.FC<ContactFormProps> = ({ preselectedWebsiteType }) => {
+export const ContactForm: React.FC<ContactFormProps> = ({
+  preselectedWebsiteType,
+  currentUser,
+  onOrderCreated,
+}) => {
   const [formData, setFormData] = useState<ProjectFormData>({
-    fullName: '',
+    fullName: currentUser?.fullName || '',
     businessName: '',
-    email: '',
+    email: currentUser?.email || '',
     whatsappNumber: '',
     websiteType: 'Business Website',
     budgetRange: 'Standard Project',
@@ -21,6 +28,7 @@ export const ContactForm: React.FC<ContactFormProps> = ({ preselectedWebsiteType
   });
 
   const [submitted, setSubmitted] = useState(false);
+  const [createdOrderId, setCreatedOrderId] = useState<string>('');
   const [copied, setCopied] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
@@ -29,6 +37,16 @@ export const ContactForm: React.FC<ContactFormProps> = ({ preselectedWebsiteType
       setFormData((prev) => ({ ...prev, websiteType: preselectedWebsiteType }));
     }
   }, [preselectedWebsiteType]);
+
+  useEffect(() => {
+    if (currentUser) {
+      setFormData((prev) => ({
+        ...prev,
+        fullName: prev.fullName || currentUser.fullName,
+        email: prev.email || currentUser.email,
+      }));
+    }
+  }, [currentUser]);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
@@ -43,8 +61,9 @@ export const ContactForm: React.FC<ContactFormProps> = ({ preselectedWebsiteType
     setErrorMessage('');
   };
 
-  const generateWhatsAppMessage = () => {
+  const generateWhatsAppMessage = (orderId?: string) => {
     const text = `*New Website Inquiry - Veyracon Web Studio*
+🆔 *Order ID:* ${orderId || createdOrderId || 'PENDING'}
 👤 *Name:* ${formData.fullName}
 🏢 *Business:* ${formData.businessName || 'N/A'}
 📧 *Email:* ${formData.email}
@@ -59,6 +78,32 @@ ${formData.projectDescription || 'No additional notes provided.'}`;
     return encodeURIComponent(text);
   };
 
+  const generateEmailSubject = (orderId: string) => {
+    return encodeURIComponent(`New Website Order ${orderId}: ${formData.websiteType} - ${formData.fullName}`);
+  };
+
+  const generateEmailBody = (orderId: string) => {
+    const body = `Dear Veyracon Web Studio,
+
+I would like to commission a website project with the following requirements:
+
+Order ID: ${orderId}
+Client Name: ${formData.fullName}
+Business Name: ${formData.businessName || 'N/A'}
+Client Email: ${formData.email}
+WhatsApp: ${formData.whatsappNumber}
+Website Type: ${formData.websiteType}
+Budget Range: ${formData.budgetRange}
+Existing Website: ${formData.hasWebsite}
+Design Style: ${formData.designStyle}
+
+Project Details:
+${formData.projectDescription || 'No additional notes provided.'}
+
+Looking forward to your response.`;
+    return encodeURIComponent(body);
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -70,6 +115,17 @@ ${formData.projectDescription || 'No additional notes provided.'}`;
     if (!formData.agreedToPricingTerms) {
       setErrorMessage('Please confirm that final pricing depends on specific project requirements.');
       return;
+    }
+
+    // Save order into persistent storage so the Owner / Admin dashboard receives it immediately
+    const saved = saveOrder({
+      ...formData,
+      userId: currentUser?.id,
+    });
+
+    setCreatedOrderId(saved.id);
+    if (onOrderCreated) {
+      onOrderCreated(saved);
     }
 
     // Set submitted state to show the confirmed submission screen
@@ -208,19 +264,34 @@ Description: ${formData.projectDescription}`;
                     </button>
                   </div>
 
+                  <div className="p-3 rounded-lg bg-[#0B0B0D] border border-[#1E2028] flex items-center justify-between">
+                    <span className="text-[11px] text-[#A8A8AD]">Official Reference ID:</span>
+                    <span className="font-mono text-xs font-bold text-[#E2C27D]">{createdOrderId}</span>
+                  </div>
+
                   <p className="text-xs text-[#A8A8AD] leading-relaxed">
-                    To receive an immediate review and quote, click below to forward this brief directly to Veyracon's WhatsApp:
+                    Your order has been recorded into the Veyracon Studio pipeline. Choose how you would like to transmit your brief:
                   </p>
 
-                  <a
-                    href={`https://wa.me/923453088393?text=${generateWhatsAppMessage()}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="w-full inline-flex items-center justify-center gap-2 py-3.5 px-4 rounded-xl text-xs font-bold uppercase tracking-wider bg-[#25D366] text-black hover:bg-[#22bf5b] transition-all shadow-md"
-                  >
-                    <MessageCircle className="w-4 h-4 text-black" />
-                    Send Directly on WhatsApp (+92 345 3088393)
-                  </a>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <a
+                      href={`https://wa.me/923453088393?text=${generateWhatsAppMessage(createdOrderId)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-full inline-flex items-center justify-center gap-2 py-3 px-3 rounded-xl text-xs font-bold uppercase tracking-wider bg-[#25D366] text-black hover:bg-[#22bf5b] transition-all shadow-md"
+                    >
+                      <MessageCircle className="w-4 h-4 text-black flex-shrink-0" />
+                      Send on WhatsApp
+                    </a>
+
+                    <a
+                      href={`mailto:veyraconwebstudio@gmail.com?subject=${generateEmailSubject(createdOrderId)}&body=${generateEmailBody(createdOrderId)}`}
+                      className="w-full inline-flex items-center justify-center gap-2 py-3 px-3 rounded-xl text-xs font-bold uppercase tracking-wider bg-[#1C1E28] border border-[#2B2D3A] hover:border-[#C8A96B]/60 text-[#F5F4F0] hover:text-[#E2C27D] transition-all"
+                    >
+                      <Mail className="w-4 h-4 text-[#C8A96B] flex-shrink-0" />
+                      Send Email to Studio
+                    </a>
+                  </div>
                 </div>
 
                 <div className="pt-3">

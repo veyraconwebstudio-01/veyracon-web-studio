@@ -65,3 +65,19 @@
   background: #C8A96B;
 }
 
+/* Hide Netlify drawer, badge, feedback widgets, and deploy preview bars */
+[data-netlify-drawer],
+[id*="netlify"],
+[class*="netlify-drawer"],
+iframe[src*="netlify"],
+.netlify-badge,
+#netlify-feedback-widget,
+div[data-netlify-drawer="true"] {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+

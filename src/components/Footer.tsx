@@ -2,7 +2,11 @@ import React, { useState } from 'react';
 import { VeyraconLogo } from './VeyraconLogo';
 import { Instagram, MessageCircle, ArrowUpRight, X, Shield, FileText } from 'lucide-react';
 
-export const Footer: React.FC = () => {
+interface FooterProps {
+  onOpenSitemap?: () => void;
+}
+
+export const Footer: React.FC<FooterProps> = ({ onOpenSitemap }) => {
   const [activeModal, setActiveModal] = useState<'privacy' | 'terms' | null>(null);
   const currentYear = new Date().getFullYear();
 
@@ -164,7 +168,23 @@ export const Footer: React.FC = () => {
             © {currentYear} Veyracon Web Studio. All rights reserved.
           </div>
 
-          <div className="flex items-center gap-6">
+          <div className="flex flex-wrap items-center gap-4 sm:gap-6">
+            {onOpenSitemap && (
+              <button
+                onClick={onOpenSitemap}
+                className="hover:text-[#E2C27D] text-[#C8A96B] transition-colors cursor-pointer flex items-center gap-1 font-medium"
+              >
+                HTML Sitemap
+              </button>
+            )}
+            <a
+              href="/sitemap.xml"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-[#F5F4F0] transition-colors"
+            >
+              XML Sitemap
+            </a>
             <button
               onClick={() => setActiveModal('privacy')}
               className="hover:text-[#F5F4F0] transition-colors cursor-pointer"

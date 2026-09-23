@@ -1,0 +1,9 @@
+# Vercel Single-Page Application (SPA) routing configuration
+{
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}

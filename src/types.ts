@@ -63,3 +63,30 @@ export interface ProjectFormData {
   projectDescription: string;
   agreedToPricingTerms: boolean;
 }
+
+export type OrderStatus = 'New' | 'In Review' | 'In Progress' | 'Completed' | 'Archived';
+
+export interface OrderItem {
+  id: string;
+  createdAt: string;
+  fullName: string;
+  businessName: string;
+  email: string;
+  whatsappNumber: string;
+  websiteType: string;
+  budgetRange: string;
+  hasWebsite: string;
+  designStyle: string;
+  projectDescription: string;
+  status: OrderStatus;
+  notes?: string;
+  userId?: string;
+}
+
+export interface UserAccount {
+  id: string;
+  fullName: string;
+  email: string;
+  role: 'admin' | 'user';
+  createdAt: string;
+}
